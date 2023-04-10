@@ -20,10 +20,11 @@ const refs = {
   secondsEl: document.querySelector('[data-seconds]'),
 };
 
-flatpickr(refs.dateSelectorEl, options);
+const dateInst = flatpickr(refs.dateSelectorEl, options);
 
-console.log(flatpickr.defaultDate);
+console.log(dateInst.selectedDates[0]);
 
+initOnSuitableDate(dateInst.selectedDates[0]);
 
 function initOnSuitableDate(date) {
     if (Date.now() < date) {
