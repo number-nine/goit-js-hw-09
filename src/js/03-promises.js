@@ -44,8 +44,12 @@ function randomizeValues() {
 
 function processingPromisesResults(promise) {
   promise
-    .then(result => Notify.success(result))
-    .catch(result => Notify.failure(result));
+    .then(({ position, delay }) =>
+      Notify.success(`✅ Fulfilled promise ${position + 1} in ${delay}ms`)
+    )
+    .catch(({ position, delay }) =>
+      Notify.failure(`❌ Rejected promise ${position + 1} in ${delay}ms`)
+    );
 }
 
 function createPromisesCollection(basicDelay, step, amount) {
@@ -62,9 +66,9 @@ function createPromise(position, delay) {
     const shouldResolve = Math.random() > 0.3;
     setTimeout(() => {
       if (shouldResolve) {
-        resolve(`✅ Fulfilled promise ${position+1} in ${delay}ms`);
+        resolve({ position, delay });
       }
-      reject(`❌ Rejected promise ${position+1} in ${delay}ms`);
+      reject({ position, delay });
     }, delay);
   });
 }
