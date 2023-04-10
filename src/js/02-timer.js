@@ -1,15 +1,13 @@
 import flatpickr from 'flatpickr';
-import 'flatpickr/dist/flatpickr.min.css';
+import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
-const options = {
-  enableTime: true,
-  time_24hr: true,
-  defaultDate: new Date(),
-  minuteIncrement: 1,
-    onClose(selectedDates) {
-      initOnSuitableDate(selectedDates[0]);
-    },
-};
+import 'flatpickr/dist/flatpickr.min.css';
+import 'notiflix/dist/notiflix-3.2.6.min.css';
+
+// let startDate = 0;
+// let destinationDate = 0;
+let timeRange = 0;
+let intervalId = null;
 
 const refs = {
   dateSelectorEl: document.querySelector('#datetime-picker'),
@@ -20,17 +18,81 @@ const refs = {
   secondsEl: document.querySelector('[data-seconds]'),
 };
 
+const options = {
+  enableTime: true,
+  time_24hr: true,
+  defaultDate: new Date(),
+  minuteIncrement: 1,
+  onClose(selectedDates) {
+    initTimeRange(selectedDates[0]);
+    initCounter(timeRange);
+  },
+};
+
 const dateInst = flatpickr(refs.dateSelectorEl, options);
 
-console.log(dateInst.selectedDates[0]);
+initTimeRange(dateInst.selectedDates[0]);
+initCounter(timeRange);
+refs.startBtnEl.addEventListener('click', counter);
 
-initOnSuitableDate(dateInst.selectedDates[0]);
+function counter() {
+  
+  if (!intervalId) {
+    refs.dateSelectorEl.disabled = true;
+    refs.startBtnEl.textContent = 'Stop';
+    intervalId = setInterval(() => {
+      timeRange -= 1000;
+      initCounter(timeRange);
+    }, 1000);
+  } else {
+    clearInterval(intervalId);
+    intervalId = null;
+    refs.dateSelectorEl.disabled = false;
+    refs.startBtnEl.textContent = 'Start';
+  }
+}
 
-function initOnSuitableDate(date) {
-    if (Date.now() < date) {
-        refs.startBtnEl.disabled = false;
-        return;
-    }
-    refs.startBtnEl.disabled = true;
-    console.log('wrong date');
+function convertMs(ms) {
+  // Number of milliseconds per unit of time
+  const second = 1000;
+  const minute = second * 60;
+  const hour = minute * 60;
+  const day = hour * 24;
+
+  // Remaining days
+  const days = Math.floor(ms / day);
+  // Remaining hours
+  const hours = Math.floor((ms % day) / hour);
+  // Remaining minutes
+  const minutes = Math.floor(((ms % day) % hour) / minute);
+  // Remaining seconds
+  const seconds = Math.floor((((ms % day) % hour) % minute) / second);
+
+  return { days, hours, minutes, seconds };
+}
+
+function initTimeRange(date) {
+  const startDate = Date.now();
+  if (startDate < date) {
+    timeRange = date - startDate > 8639999000 ? 8639999000 : date - startDate;
+    refs.startBtnEl.disabled = false;
+    refs.dateSelectorEl.style.borderColor = 'unset';
+    return;
+  }
+  timeRange = 0;
+  refs.startBtnEl.disabled = true;
+  refs.dateSelectorEl.style.borderColor = '#ff0000';
+  Notify.failure('Please choose a date in the future');
+}
+
+function initCounter(ms) {
+  const { days, hours, minutes, seconds } = convertMs(ms);
+  refs.daysEl.textContent = addLeadingZero(days);
+  refs.hoursEl.textContent = addLeadingZero(hours);
+  refs.minutesEl.textContent = addLeadingZero(minutes);
+  refs.secondsEl.textContent = addLeadingZero(seconds);
+}
+
+function addLeadingZero(unit) {
+  return unit.toString().padStart(2, '0');
 }
