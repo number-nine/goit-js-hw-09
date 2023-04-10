@@ -4,8 +4,6 @@ import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import 'flatpickr/dist/flatpickr.min.css';
 import 'notiflix/dist/notiflix-3.2.6.min.css';
 
-// let startDate = 0;
-// let destinationDate = 0;
 let timeRange = 0;
 let intervalId = null;
 
@@ -36,20 +34,29 @@ initCounter(timeRange);
 refs.startBtnEl.addEventListener('click', counter);
 
 function counter() {
-  
   if (!intervalId) {
     refs.dateSelectorEl.disabled = true;
     refs.startBtnEl.textContent = 'Stop';
     intervalId = setInterval(() => {
       timeRange -= 1000;
       initCounter(timeRange);
+      if (timeRange === 0) {
+        stopCounter();
+        initTimeRange(dateInst.selectedDates[0]);
+        return;
+      }
+      
     }, 1000);
   } else {
-    clearInterval(intervalId);
-    intervalId = null;
-    refs.dateSelectorEl.disabled = false;
-    refs.startBtnEl.textContent = 'Start';
+    stopCounter();
   }
+}
+
+function stopCounter() {
+  clearInterval(intervalId);
+  intervalId = null;
+  refs.dateSelectorEl.disabled = false;
+  refs.startBtnEl.textContent = 'Start';
 }
 
 function convertMs(ms) {
@@ -73,8 +80,9 @@ function convertMs(ms) {
 
 function initTimeRange(date) {
   const startDate = Date.now();
-  if (startDate < date) {
-    timeRange = date - startDate > 8639999000 ? 8639999000 : date - startDate;
+  let crudeTimeRange = Math.trunc((date - startDate)/1000)*1000;
+  if (crudeTimeRange > 0) {
+    timeRange = crudeTimeRange > 8639999000 ? 8639999000 : crudeTimeRange;
     refs.startBtnEl.disabled = false;
     refs.dateSelectorEl.style.borderColor = 'unset';
     return;
